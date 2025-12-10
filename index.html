@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>暴雪安全令验证器 | 淘宝:境仙生电玩</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsSHA/2.4.2/sha1.js"></script>
+    <style>
+        :root {
+            --primary-color: #00d2ff;
+            --secondary-color: #3a7bd5;
+            --bg-gradient: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --text-color: #ffffff;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg-gradient);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--text-color);
+            overflow: hidden;
+        }
+
+        .container {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 40px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        h1 {
+            margin-top: 0;
+            font-weight: 300;
+            letter-spacing: 2px;
+            font-size: 24px;
+            margin-bottom: 30px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .input-group {
+            margin-bottom: 25px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: rgba(255,255,255,0.8);
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            box-sizing: border-box;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.3s;
+            font-family: monospace;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 10px rgba(0, 210, 255, 0.3);
+        }
+
+        .code-display {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 48px;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin: 20px 0;
+            letter-spacing: 8px;
+            text-shadow: 0 0 20px rgba(0, 210, 255, 0.6);
+            cursor: pointer;
+            user-select: none;
+            transition: transform 0.1s;
+        }
+
+        .code-display:active {
+            transform: scale(0.95);
+        }
+
+        .progress-container {
+            width: 100%;
+            height: 4px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 2px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: var(--primary-color);
+            width: 100%;
+            transition: width 1s linear;
+        }
+
+        .btn {
+            background: linear-gradient(90deg, var(--secondary-color), var(--primary-color));
+            border: none;
+            padding: 12px 30px;
+            color: white;
+            border-radius: 50px;
+            font-size: 16px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 210, 255, 0.4);
+            transition: transform 0.2s, box-shadow 0.2s;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 210, 255, 0.6);
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+        }
+
+        .shop-link {
+            display: inline-block;
+            color: rgba(255,255,255,0.7);
+            text-decoration: none;
+            font-size: 14px;
+            margin-top: 10px;
+            border-bottom: 1px dotted rgba(255,255,255,0.5);
+            transition: color 0.3s;
+        }
+
+        .shop-link:hover {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+
+        .footer {
+            margin-top: 20px;
+            font-size: 12px;
+            color: rgba(255,255,255,0.4);
+        }
+
+        /* Toast notification */
+        #toast {
+            visibility: hidden;
+            min-width: 250px;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            text-align: center;
+            border-radius: 8px;
+            padding: 12px;
+            position: fixed;
+            z-index: 1;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.5s, bottom 0.5s;
+        }
+
+        #toast.show {
+            visibility: visible;
+            opacity: 1;
+            bottom: 50px;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                width: 85%;
+                padding: 30px 20px;
+            }
+            .code-display {
+                font-size: 36px;
+                letter-spacing: 4px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>暴雪安全令验证器</h1>
+        
+        <div class="input-group">
+            <label for="secretKey">40位安全令密钥 (Hex)</label>
+            <input type="text" id="secretKey" placeholder="在此粘贴您的密钥" autocomplete="off">
+        </div>
+
+        <div id="codeDisplay" class="code-display" title="点击复制">--------</div>
+        
+        <div class="progress-container">
+            <div id="progressBar" class="progress-bar"></div>
+        </div>
+
+        <button class="btn" onclick="copyCode()">复制验证码</button>
+
+        <div>
+            <a href="https://item.taobao.com/item.htm?spm=a21xtw.29178619.product_shelf.3.4c1e76cdeKSiiR&id=735553781031" target="_blank" class="shop-link">访问本店 - 淘宝:境仙生电玩</a>
+        </div>
+        
+        <div class="footer">
+            可联系 VX：huawuque516
+        </div>
+    </div>
+
+    <div id="toast">验证码已复制到剪贴板</div>
+
+    <script>
+        // 核心逻辑：JS版 HMAC-SHA1 和 TOTP 计算
+        // 使用 jsSHA 库处理 Hex 和 HMAC，保持与 Python struct/hmac 逻辑一致
+
+        const secretInput = document.getElementById('secretKey');
+        const codeDisplay = document.getElementById('codeDisplay');
+        const progressBar = document.getElementById('progressBar');
+        
+        // 从本地存储加载密钥
+        window.onload = function() {
+            const savedSecret = localStorage.getItem('blizzard_secret');
+            if (savedSecret) {
+                secretInput.value = savedSecret;
+                updateCode();
+            }
+        };
+
+        // 监听输入变化并保存
+        secretInput.addEventListener('input', function() {
+            // 移除非Hex字符
+            let val = this.value.replace(/[^0-9a-fA-F]/g, '');
+            // 保存到本地存储
+            if(val) {
+                localStorage.setItem('blizzard_secret', val);
+                updateCode();
+            }
+        });
+
+        function hexToBytes(hex) {
+            for (var bytes = [], c = 0; c < hex.length; c += 2)
+                bytes.push(parseInt(hex.substr(c, 2), 16));
+            return bytes;
+        }
+
+        function intToBytes(num) {
+            var bytes = [];
+            for(var i=7; i>=0; i--) {
+                bytes[i] = num & (255);
+                num = num / 256;
+            }
+            return bytes;
+        }
+
+        function generateCode(secretHex) {
+            if (!secretHex || secretHex.length < 10) return "--------";
+
+            try {
+                const epoch = Math.round(new Date().getTime() / 1000.0);
+                const timeStep = 30;
+                const counter = Math.floor(epoch / timeStep);
+
+                // 转换 counter 为 8 字节大端序 (struct.pack('>Q', counter))
+                // JavaScript 的位运算通常是 32 位的，所以处理 64 位整数比较麻烦
+                // 这里我们使用 jsSHA 的内置功能或手动构建 hex 字符串
+                
+                const timeHex = counter.toString(16).padStart(16, '0');
+                
+                // 使用 jsSHA 库计算 HMAC-SHA1
+                const shaObj = new jsSHA("SHA-1", "HEX");
+                shaObj.setHMACKey(secretHex, "HEX");
+                shaObj.update(timeHex);
+                const hmac = shaObj.getHMAC("HEX");
+
+                // Python: offset = hmac_digest[-1] & 0x0F
+                // 获取最后一个字节
+                const offset = parseInt(hmac.substring(hmac.length - 2), 16) & 0x0F;
+
+                // Python: truncated_hash = hmac_digest[offset:offset + 4]
+                // 截取4个字节（8个hex字符）
+                const truncatedHex = hmac.substring(offset * 2, offset * 2 + 8);
+                
+                // Python: struct.unpack(">I", ...)[0] & 0x7FFFFFFF
+                let hotp = parseInt(truncatedHex, 16) & 0x7FFFFFFF;
+
+                // Python: % 100000000 (8位数字)
+                hotp = hotp % 100000000;
+
+                // 格式化为8位，不足补0
+                return hotp.toString().padStart(8, '0');
+
+            } catch (e) {
+                console.error(e);
+                return "ERROR";
+            }
+        }
+
+        function updateCode() {
+            const secret = secretInput.value.trim();
+            const code = generateCode(secret);
+            codeDisplay.innerText = code;
+        }
+
+        function updateProgress() {
+            const epoch = new Date().getTime() / 1000.0;
+            const timeStep = 30;
+            const remaining = timeStep - (epoch % timeStep);
+            const percentage = (remaining / timeStep) * 100;
+            
+            progressBar.style.width = percentage + "%";
+            
+            // 当周期接近重置时（比如剩余29.9秒，即刚过了0秒），刷新代码
+            if (remaining > 29.8 || remaining < 0.2) {
+                updateCode();
+            }
+        }
+
+        // 定时器
+        setInterval(updateProgress, 100); // 进度条动画
+        setInterval(updateCode, 1000); // 确保每一秒数字也是准的
+
+        // 复制功能
+        function copyCode() {
+            const code = codeDisplay.innerText;
+            if (code === "--------" || code === "ERROR") return;
+
+            // 使用 Clipboard API
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(code).then(showToast);
+            } else {
+                // 后备方案
+                const textarea = document.createElement('textarea');
+                textarea.value = code;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                showToast();
+            }
+        }
+
+        codeDisplay.addEventListener('click', copyCode);
+
+        function showToast() {
+            const toast = document.getElementById("toast");
+            toast.className = "show";
+            setTimeout(function(){ toast.className = toast.className.replace("show", ""); }, 3000);
+        }
+    </script>
+</body>
+</html>
